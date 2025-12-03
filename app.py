@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="Recruitment Analytics",
     page_icon="💼",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # This tells Streamlit to TRY to open it
 )
 
 # Custom CSS
@@ -42,15 +42,7 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* --- SIDEBAR LOCK --- */
-    /* Hide the button that collapses the sidebar */
-    [data-testid="stSidebarCollapsedControl"] {
-        display: none;
-    }
-    /* Hide the close button inside the sidebar (if present) */
-    section[data-testid="stSidebar"] button[kind="header"] {
-        display: none;
-    }
+    /* NOTE: I removed the code that hides the sidebar button so you can open it again! */
     
 </style>
 """, unsafe_allow_html=True)
