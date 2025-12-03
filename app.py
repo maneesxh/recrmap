@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="Recruitment Analytics",
     page_icon="💼",
     layout="wide",
-    initial_sidebar_state="expanded"  # This tells Streamlit to TRY to open it
+    initial_sidebar_state="expanded"  # Tries to force it open
 )
 
 # Custom CSS
@@ -37,12 +37,9 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.05);
     }
     
-    /* Hide default Streamlit clutter */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 
-    /* NOTE: I removed the code that hides the sidebar button so you can open it again! */
+    /* I HAVE REMOVED THE SIDEBAR HIDING CSS HERE */
+    /* The arrow button will now appear so you can un-collapse the menu */
     
 </style>
 """, unsafe_allow_html=True)
