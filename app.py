@@ -13,7 +13,7 @@ st.set_page_config(
     page_title="Recruitment Analytics",
     page_icon="💼",
     layout="wide",
-    initial_sidebar_state="expanded"  # Tries to force it open
+    initial_sidebar_state="expanded"
 )
 
 # Custom CSS
@@ -37,9 +37,10 @@ st.markdown("""
         background-color: rgba(255, 255, 255, 0.05);
     }
     
-
-    /* I HAVE REMOVED THE SIDEBAR HIDING CSS HERE */
-    /* The arrow button will now appear so you can un-collapse the menu */
+    /* Hide default Streamlit clutter */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
@@ -116,6 +117,18 @@ if uploaded_files:
             pass
 
     master_df = pd.concat(all_data, ignore_index=True)
+
+    # --- NEW: DUPLICATE REMOVAL LOGIC ---
+    # We ensure Phone is a string, then drop duplicates keeping the first occurrence
+    if 'Phone' in master_df.columns:
+        initial_count = len(master_df)
+        master_df['Phone'] = master_df['Phone'].astype(str)
+        master_df = master_df.drop_duplicates(subset=['Phone'], keep='first')
+        
+        # Optional: Show how many were removed in sidebar
+        removed_count = initial_count - len(master_df)
+        if removed_count > 0:
+            st.sidebar.success(f"Removed {removed_count} duplicates.")
     
     # 2. GEOCODING
     master_df['Clean_City'] = master_df['City'].apply(clean_city_name)
