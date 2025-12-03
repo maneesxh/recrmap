@@ -11,12 +11,12 @@ import re
 # ==========================================
 st.set_page_config(
     page_title="Recruitment Analytics",
-    page_icon="📊",
+    page_icon="💼",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Structure/Fonts only (No hardcoded colors to avoid theme conflicts)
+# Custom CSS
 st.markdown("""
 <style>
     /* Professional Font Stack */
@@ -34,13 +34,24 @@ st.markdown("""
         border: 1px solid rgba(128, 128, 128, 0.2);
         padding: 15px;
         border-radius: 8px;
-        background-color: rgba(255, 255, 255, 0.05); /* Subtle transparency */
+        background-color: rgba(255, 255, 255, 0.05);
     }
     
     /* Hide default Streamlit clutter */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* --- SIDEBAR LOCK --- */
+    /* Hide the button that collapses the sidebar */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: none;
+    }
+    /* Hide the close button inside the sidebar (if present) */
+    section[data-testid="stSidebar"] button[kind="header"] {
+        display: none;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,13 +172,10 @@ if uploaded_files:
         st.subheader("Geographic Distribution")
         
         # We use a neutral map tile that works for both Dark/Light modes
-        # "CartoDB positron" is light grey, which is standard for Data Dashboards
         m = folium.Map(location=[21.7679, 78.8718], zoom_start=5, tiles="CartoDB positron")
         marker_cluster = MarkerCluster().add_to(m)
 
         for idx, row in active_df.iterrows():
-            # Popups need inline styling to look good in both modes
-            # We force black text inside the white popup bubble for readability
             html = f"""
             <div style="font-family:sans-serif; color: #333; font-size:12px;">
                 <strong style="color: #004B87; font-size:14px;">{row['Name']}</strong>
