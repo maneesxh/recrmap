@@ -18,74 +18,79 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. PROFESSIONAL CSS (High Contrast & Sleek)
+# 2. PROFESSIONAL CSS (Strict Visibility Fix)
 # ==========================================
 st.markdown("""
 <style>
-    /* GLOBAL FONTS & COLORS */
+    /* GLOBAL FONTS */
     html, body, [class*="css"] {
-        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-        color: #1F2937; /* Dark Grey Text */
-        background-color: #F9FAFB; /* Very Light Grey Background */
+        font-family: 'Segoe UI', 'Roboto', sans-serif;
+        background-color: #F3F4F6; /* Light Grey Background */
     }
     
-    /* REMOVE DEFAULT PADDING */
+    /* REMOVE PADDING */
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1rem;
         padding-bottom: 2rem;
     }
     
-    /* KPI METRIC CARDS - STRICT STYLING */
+    /* --- METRIC CARD VISIBILITY FIX --- */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
         border-radius: 8px !important;
-        padding: 20px !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+        padding: 15px !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Metric Label (e.g. "Total Candidates") */
+    /* Force Labels (Total Candidates, etc.) to be DARK GREY/BLACK */
     div[data-testid="stMetricLabel"] {
-        color: #6B7280 !important; /* Cool Grey */
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #111827 !important; /* Dark Grey */
     }
     
-    /* Metric Value (e.g. "1,250") */
+    /* Force Values (The Numbers) to be BLACK */
     div[data-testid="stMetricValue"] {
-        color: #111827 !important; /* Near Black */
         font-size: 28px !important;
-        font-weight: 700 !important;
-        padding-top: 5px !important;
+        font-weight: 800 !important;
+        color: #111827 !important; /* Pure Black */
+    }
+    
+    /* Also target potential child elements to be safe */
+    div[data-testid="stMetricLabel"] > div, 
+    div[data-testid="stMetricLabel"] p {
+        color: #111827 !important;
+    }
+
+    /* Fallback for theme overrides - force all metric text dark */
+    div[data-testid="stMetric"] * {
+        color: #111827 !important;
     }
     
     /* TABS STYLING */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #E5E7EB;
+        gap: 10px;
+        background-color: transparent;
+        padding-bottom: 10px;
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: transparent;
-        border: none;
+        height: 45px;
+        background-color: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-radius: 6px;
         color: #6B7280;
-        font-weight: 500;
-        font-size: 15px;
+        font-weight: 600;
+        font-size: 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        color: #2563EB; /* Enterprise Blue */
-        border-bottom: 2px solid #2563EB;
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        border: 1px solid #2563EB !important;
     }
-    
-    /* DATAFRAME HEADERS */
-    thead tr th:first-child { display:none }
-    tbody th { display:none }
     
     /* HIDE STREAMLIT BRANDING */
     #MainMenu {visibility: hidden;}
