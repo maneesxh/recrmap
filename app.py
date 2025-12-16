@@ -6,6 +6,7 @@ from streamlit_folium import st_folium
 import plotly.express as px
 import re
 from datetime import datetime
+import numpy as np
 
 # ==========================================
 # 1. ENTERPRISE CONFIGURATION
@@ -43,7 +44,7 @@ st.markdown("""
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Force Labels (Total Candidates, etc.) to be DARK GREY/BLACK */
+    /* Force Labels (Total Candidates, etc.) to be DARK */
     div[data-testid="stMetricLabel"] {
         font-size: 14px !important;
         font-weight: 700 !important;
@@ -157,18 +158,36 @@ def clean_city_name(city_raw):
     city = city.replace(" district", "").replace(" city", "").strip()
     return city
 
-def normalize_columns(df):
-    df.columns = [c.lower().strip() for c in df.columns]
+def normalize_columns(df, filename=""):
+    # 1. Clean header names
+    df.columns = [str(c).lower().strip() for c in df.columns]
     
+    # 2. Comprehensive Column Map
     col_map = {
-        'full_name': 'Name', 'name': 'Name', 'candidate name': 'Name',
-        'city': 'City', 'location': 'City', 'preferred location': 'City', 'current city': 'City',
-        'what\'s_your_current_designation?': 'Role', 'designation': 'Role', 'major job title': 'Role', 'job title': 'Role', 'role': 'Role',
+        # Name
+        'full_name': 'Name', 'name': 'Name', 'candidate name': 'Name', 'full name': 'Name',
+        
+        # Location
+        'city': 'City', 'location': 'City', 'preferred location': 'City', 
+        'current city': 'City', 'region': 'City',
+        
+        # Role
+        'what\'s_your_current_designation?': 'Role', 'designation': 'Role', 
+        'major job title': 'Role', 'job title': 'Role', 'role': 'Role',
+        'whats your current designation?': 'Role', 'current_designation': 'Role',
+        
+        # Phone (Backticks handled by string cleaner above)
         'phone': 'Phone', 'phone_number': 'Phone', 'contact': 'Phone',
+        'contact no': 'Phone', 'contact no`': 'Phone', 'mobile': 'Phone',
+        
+        # Status
         'lead_status': 'Status', 'status': 'Status',
+        
+        # Date
         'created_time': 'Date', 'timestamp': 'Date', 'date': 'Date'
     }
     
+    # 3. Rename columns
     new_columns = {}
     for col in df.columns:
         if col in col_map:
@@ -176,20 +195,47 @@ def normalize_columns(df):
     
     df = df.rename(columns=new_columns)
     
-    # Initialize Defaults
+    # 4. FIX: Merge Duplicate Columns (Safety Fix)
+    if not df.columns.is_unique:
+        # Replace string 'Unknown' with NaN to allow coalescing
+        df = df.replace(['Unknown', 'unknown'], np.nan)
+        # Group by column name and take the first non-null value
+        df = df.groupby(level=0, axis=1).first()
+    
+    # 5. Initialize Missing Standard Columns
     if 'Status' not in df.columns: df['Status'] = 'New'
-    if 'Date' not in df.columns: df['Date'] = pd.to_datetime('today').date()
+    
+    # Date Handling
+    if 'Date' not in df.columns: 
+        df['Date'] = pd.to_datetime('today').date()
     else: 
-        try: df['Date'] = pd.to_datetime(df['Date']).dt.date
+        try: df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
         except: df['Date'] = pd.to_datetime('today').date()
 
     if 'Interview_Date' not in df.columns: df['Interview_Date'] = None
     if 'Salary' not in df.columns: df['Salary'] = None
     if 'Remarks' not in df.columns: df['Remarks'] = None
     
+    # Fill missing essential columns
     for col in ['Name', 'City', 'Role', 'Phone']:
         if col not in df.columns: df[col] = "Unknown"
+
+    # 6. Smart Role Inference (If column missing or empty)
+    # Check if Role is mostly "Unknown"
+    is_role_missing = df['Role'].eq("Unknown").all() or df['Role'].isnull().all()
     
+    if is_role_missing:
+        inferred_role = "Unknown"
+        fname_lower = str(filename).lower()
+        if 'sales' in fname_lower: inferred_role = "Sales Executive"
+        elif 'manager' in fname_lower: inferred_role = "Manager"
+        elif 'hr' in fname_lower: inferred_role = "HR"
+        elif 'accountant' in fname_lower: inferred_role = "Accountant"
+        
+        # Only overwrite if we found a match
+        if inferred_role != "Unknown":
+            df['Role'] = inferred_role
+            
     df['Status'] = df['Status'].fillna('New')
     df['Role'] = df['Role'].fillna('Unknown')
     return df
@@ -217,14 +263,19 @@ with st.sidebar:
             try:
                 if file.name.endswith('.csv'): df_temp = pd.read_csv(file)
                 else: df_temp = pd.read_excel(file)
-                df_temp = normalize_columns(df_temp)
+                
+                # Normalize with Filename for smart inference
+                df_temp = normalize_columns(df_temp, filename=file.name)
                 df_temp['Source'] = file.name
                 all_data.append(df_temp)
             except Exception as e:
                 st.error(f"Error reading {file.name}: {e}")
         
         if all_data:
+            # Concat should now work safely
             master_df = pd.concat(all_data, ignore_index=True)
+            
+            # Clean Phone Duplicates (Rows)
             if 'Phone' in master_df.columns:
                 master_df['Phone'] = master_df['Phone'].astype(str)
                 master_df = master_df.drop_duplicates(subset=['Phone'], keep='first')
@@ -269,7 +320,6 @@ if not st.session_state.data.empty:
             st.markdown("#### Geographic Distribution")
             map_df = df.dropna(subset=['Lat', 'Lon'])
             if not map_df.empty:
-                # Using a professional tileset
                 m = folium.Map(location=[21.7679, 78.8718], zoom_start=5, tiles="CartoDB positron")
                 marker_cluster = MarkerCluster().add_to(m)
                 for idx, row in map_df.iterrows():
@@ -288,7 +338,6 @@ if not st.session_state.data.empty:
             status_counts = df['Status'].value_counts().reset_index()
             status_counts.columns = ['Stage', 'Count']
             
-            # Professional Color Palette
             fig_funnel = px.bar(status_counts, x='Stage', y='Count', text='Count',
                                 color_discrete_sequence=['#2563EB'])
             fig_funnel.update_layout(
@@ -339,7 +388,7 @@ if not st.session_state.data.empty:
                 st.markdown(f"**Status Distribution in {selected_city_dash.title()}**")
                 st.dataframe(status_breakdown, hide_index=True, use_container_width=True)
 
-    # --- TAB 2: OUTREACH (Telecaller) ---
+    # --- TAB 2: OUTREACH ---
     with tab2:
         st.markdown("#### Candidate Outreach")
         
@@ -368,7 +417,7 @@ if not st.session_state.data.empty:
             st.success("Records updated successfully.")
             st.rerun()
 
-    # --- TAB 3: PIPELINE (HR) ---
+    # --- TAB 3: PIPELINE ---
     with tab3:
         st.markdown("#### Pipeline Management")
         
