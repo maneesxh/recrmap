@@ -313,7 +313,42 @@ if not st.session_state.data.empty:
         
         st.markdown("---")
         
-        # 2. MAP & CHARTS
+        # 2. SCREENER (NEW SECTION - FIXED TYPE ERROR)
+        st.markdown("### Recruitment Screener (City vs Role)")
+        
+        screener_df = df.copy()
+        screener_df['Display_City'] = screener_df['Clean_City'].fillna('Unknown').str.title()
+        
+        # FIX: Ensure Role is String before Pivoting
+        screener_df['Role'] = screener_df['Role'].astype(str)
+        
+        # Filter: Exclude Unknown/Zero data for cleaner view
+        screener_df = screener_df[screener_df['Role'] != 'Unknown']
+        
+        # Pivot Table
+        screener_pivot = screener_df.pivot_table(
+            index='Display_City', 
+            columns='Role', 
+            aggfunc='size', 
+            fill_value=0
+        )
+        
+        # Add Total Column for sorting
+        screener_pivot['Total'] = screener_pivot.sum(axis=1)
+        # Sort by Total Descending
+        screener_pivot = screener_pivot.sort_values('Total', ascending=False)
+        # Remove Total column for clean display
+        screener_pivot = screener_pivot.drop(columns='Total')
+        
+        # Clean up
+        screener_pivot.columns.name = None
+        screener_pivot.index.name = "City / Region"
+        
+        st.dataframe(screener_pivot, use_container_width=True, height=400)
+        
+        st.markdown("---")
+        
+        # 3. MAP & CHARTS
         col_map, col_stats = st.columns([1.5, 1])
         
         with col_map:
@@ -350,7 +385,9 @@ if not st.session_state.data.empty:
             st.plotly_chart(fig_funnel, use_container_width=True)
             
             st.markdown("#### Role Composition")
-            role_counts = df['Role'].value_counts().head(5).reset_index()
+            # Filter out non-string roles for chart safety too
+            role_df_clean = df[df['Role'].apply(lambda x: isinstance(x, str))]
+            role_counts = role_df_clean['Role'].value_counts().head(5).reset_index()
             role_counts.columns = ['Role', 'Count']
             fig_pie = px.pie(role_counts, values='Count', names='Role', hole=0.6,
                              color_discrete_sequence=px.colors.sequential.Blues_r)
@@ -360,33 +397,6 @@ if not st.session_state.data.empty:
                 showlegend=False
             )
             st.plotly_chart(fig_pie, use_container_width=True)
-
-        st.markdown("---")
-        
-        # 3. CITY DRILL DOWN
-        st.markdown("#### Regional Breakdown")
-        
-        top_cities = df['Clean_City'].value_counts().index.tolist()
-        selected_city_dash = st.selectbox("Select Region", top_cities)
-        
-        if selected_city_dash:
-            city_df = df[df['Clean_City'] == selected_city_dash]
-            
-            role_breakdown = city_df['Role'].value_counts().reset_index()
-            role_breakdown.columns = ['Job Role', 'Count']
-            
-            status_breakdown = city_df['Status'].value_counts().reset_index()
-            status_breakdown.columns = ['Status', 'Count']
-            
-            col_d1, col_d2 = st.columns(2)
-            
-            with col_d1:
-                st.markdown(f"**Roles in {selected_city_dash.title()}**")
-                st.dataframe(role_breakdown, hide_index=True, use_container_width=True)
-                
-            with col_d2:
-                st.markdown(f"**Status Distribution in {selected_city_dash.title()}**")
-                st.dataframe(status_breakdown, hide_index=True, use_container_width=True)
 
     # --- TAB 2: OUTREACH ---
     with tab2:
