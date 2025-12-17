@@ -19,23 +19,22 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. PROFESSIONAL CSS (Strict Visibility Fix)
+# 2. PROFESSIONAL CSS (High Contrast)
 # ==========================================
 st.markdown("""
 <style>
     /* GLOBAL FONTS */
     html, body, [class*="css"] {
         font-family: 'Segoe UI', 'Roboto', sans-serif;
-        background-color: #F3F4F6; /* Light Grey Background */
+        background-color: #F3F4F6;
     }
     
-    /* REMOVE PADDING */
     .block-container {
         padding-top: 1rem;
         padding-bottom: 2rem;
     }
     
-    /* --- METRIC CARD VISIBILITY FIX --- */
+    /* METRIC CARDS */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
@@ -44,32 +43,28 @@ st.markdown("""
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Force Labels (Total Candidates, etc.) to be DARK */
     div[data-testid="stMetricLabel"] {
         font-size: 14px !important;
         font-weight: 700 !important;
         color: #111827 !important; /* Dark Grey */
     }
     
-    /* Force Values (The Numbers) to be BLACK */
     div[data-testid="stMetricValue"] {
         font-size: 28px !important;
         font-weight: 800 !important;
         color: #111827 !important; /* Pure Black */
     }
     
-    /* Also target potential child elements to be safe */
     div[data-testid="stMetricLabel"] > div, 
     div[data-testid="stMetricLabel"] p {
         color: #111827 !important;
     }
-
-    /* Fallback for theme overrides - force all metric text dark */
+    
     div[data-testid="stMetric"] * {
         color: #111827 !important;
     }
     
-    /* TABS STYLING */
+    /* TABS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: transparent;
@@ -93,16 +88,14 @@ st.markdown("""
         border: 1px solid #2563EB !important;
     }
     
-    /* HIDE STREAMLIT BRANDING */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. BACKEND LOGIC
+# 3. BACKEND LOGIC & MAPPINGS
 # ==========================================
 
 CITY_COORDINATES = {
@@ -138,6 +131,7 @@ CITY_COORDINATES = {
     "mancherial": [18.8679, 79.4639], "jagtial": [18.7909, 78.9123],
     "medchal": [17.6297, 78.4814], "sangareddy": [17.6194, 78.0813],
     "bhainsa": [19.0964, 77.9657], "huzurabad": [18.2008, 79.4087],
+    "secunderabad": [17.4399, 78.4983],
     
     # --- MAHARASHTRA & OTHERS ---
     "nagpur": [21.1458, 79.0882], "kamptee": [21.2235, 79.1943],
@@ -151,6 +145,61 @@ CITY_COORDINATES = {
     "surat": [21.1702, 72.8311], "coimbatore": [11.0168, 76.9558]
 }
 
+CITY_STATE_MAP = {
+    # Telangana
+    "hyderabad": "Telangana", "warangal": "Telangana", "nizamabad": "Telangana", 
+    "khammam": "Telangana", "karimnagar": "Telangana", "mahabubnagar": "Telangana", 
+    "nalgonda": "Telangana", "adilabad": "Telangana", "siddipet": "Telangana", 
+    "mancherial": "Telangana", "jagtial": "Telangana", "medchal": "Telangana", 
+    "sangareddy": "Telangana", "bhainsa": "Telangana", "huzurabad": "Telangana", 
+    "secunderabad": "Telangana",
+
+    # Andhra Pradesh
+    "vijayawada": "Andhra Pradesh", "guntur": "Andhra Pradesh", "visakhapatnam": "Andhra Pradesh", 
+    "vizag": "Andhra Pradesh", "rajahmundry": "Andhra Pradesh", "kakinada": "Andhra Pradesh", 
+    "nellore": "Andhra Pradesh", "tirupati": "Andhra Pradesh", "kurnool": "Andhra Pradesh", 
+    "anantapur": "Andhra Pradesh", "eluru": "Andhra Pradesh", "ongole": "Andhra Pradesh", 
+    "tenali": "Andhra Pradesh", "srikakulam": "Andhra Pradesh", "vizianagaram": "Andhra Pradesh", 
+    "chittoor": "Andhra Pradesh", "kadapa": "Andhra Pradesh", "machilipatnam": "Andhra Pradesh", 
+    "bhimavaram": "Andhra Pradesh", "gudivada": "Andhra Pradesh", "narsaraopet": "Andhra Pradesh", 
+    "tadepalligudem": "Andhra Pradesh", "nandyal": "Andhra Pradesh", "proddatur": "Andhra Pradesh", 
+    "hindupur": "Andhra Pradesh", "guntakal": "Andhra Pradesh", "dharmavaram": "Andhra Pradesh", 
+    "nidadavole": "Andhra Pradesh", "chirala": "Andhra Pradesh", "kavali": "Andhra Pradesh", 
+    "tanuku": "Andhra Pradesh", "markapuram": "Andhra Pradesh",
+
+    # Maharashtra
+    "mumbai": "Maharashtra", "pune": "Maharashtra", "nagpur": "Maharashtra", 
+    "kamptee": "Maharashtra", "amravati": "Maharashtra", "aurangabad": "Maharashtra", 
+    "nashik": "Maharashtra", "solapur": "Maharashtra", "thane": "Maharashtra",
+
+    # Karnataka
+    "bangalore": "Karnataka", "bengaluru": "Karnataka", "mysore": "Karnataka",
+
+    # Tamil Nadu
+    "chennai": "Tamil Nadu", "coimbatore": "Tamil Nadu", "madurai": "Tamil Nadu", 
+    "salem": "Tamil Nadu", "vellore": "Tamil Nadu",
+
+    # Uttar Pradesh
+    "delhi": "Delhi", "noida": "Uttar Pradesh", "gurgaon": "Haryana",
+    "gorakhpur": "Uttar Pradesh", "lucknow": "Uttar Pradesh", "kanpur": "Uttar Pradesh", 
+    "varanasi": "Uttar Pradesh", "allahabad": "Uttar Pradesh", "prayagraj": "Uttar Pradesh", 
+    "agra": "Uttar Pradesh", "meerut": "Uttar Pradesh", "ghazipur": "Uttar Pradesh", 
+    "azamgarh": "Uttar Pradesh", "akbarpur": "Uttar Pradesh", "mirzapur": "Uttar Pradesh",
+
+    # Rajasthan
+    "ajmer": "Rajasthan", "jaipur": "Rajasthan", "jodhpur": "Rajasthan", 
+    "kota": "Rajasthan", "bikaner": "Rajasthan", "udaipur": "Rajasthan",
+
+    # West Bengal
+    "kolkata": "West Bengal",
+
+    # Gujarat
+    "ahmedabad": "Gujarat", "surat": "Gujarat", "vadodara": "Gujarat",
+
+    # Madhya Pradesh
+    "bhopal": "Madhya Pradesh", "indore": "Madhya Pradesh"
+}
+
 def clean_city_name(city_raw):
     if pd.isna(city_raw): return None
     city = str(city_raw).lower().strip()
@@ -158,36 +207,45 @@ def clean_city_name(city_raw):
     city = city.replace(" district", "").replace(" city", "").strip()
     return city
 
+def get_state_from_city(clean_city):
+    if not clean_city: return "Unknown"
+    return CITY_STATE_MAP.get(clean_city.lower(), "Other")
+
+# --- STRICT ROLE CLEANING ---
+def clean_role_name(role):
+    if pd.isna(role): return "Unknown"
+    role = str(role).lower().strip()
+    
+    # 1. Filter out garbage (numbers, distances, years)
+    if re.search(r'^\d', role): return "Unknown" # Starts with number (12th pass, 30km, 1 year)
+    if 'km' in role: return "Unknown" # Contains 'km' (30km)
+    if role in ['yes', 'no', 'male', 'female', 'unknown']: return "Unknown"
+    if len(role) < 3: return "Unknown"
+    
+    # 2. Standardize Common Roles
+    if "sales" in role: return "Sales Executive"
+    if "manager" in role: return "Manager"
+    if "hr" in role: return "HR"
+    if "account" in role: return "Accountant"
+    if "cashier" in role: return "Cashier"
+    
+    return role.title()
+
 def normalize_columns(df, filename=""):
-    # 1. Clean header names
     df.columns = [str(c).lower().strip() for c in df.columns]
     
-    # 2. Comprehensive Column Map
     col_map = {
-        # Name
         'full_name': 'Name', 'name': 'Name', 'candidate name': 'Name', 'full name': 'Name',
-        
-        # Location
-        'city': 'City', 'location': 'City', 'preferred location': 'City', 
-        'current city': 'City', 'region': 'City',
-        
-        # Role
+        'city': 'City', 'location': 'City', 'preferred location': 'City', 'current city': 'City', 'region': 'City',
         'what\'s_your_current_designation?': 'Role', 'designation': 'Role', 
         'major job title': 'Role', 'job title': 'Role', 'role': 'Role',
         'whats your current designation?': 'Role', 'current_designation': 'Role',
-        
-        # Phone (Backticks handled by string cleaner above)
         'phone': 'Phone', 'phone_number': 'Phone', 'contact': 'Phone',
         'contact no': 'Phone', 'contact no`': 'Phone', 'mobile': 'Phone',
-        
-        # Status
         'lead_status': 'Status', 'status': 'Status',
-        
-        # Date
         'created_time': 'Date', 'timestamp': 'Date', 'date': 'Date'
     }
     
-    # 3. Rename columns
     new_columns = {}
     for col in df.columns:
         if col in col_map:
@@ -195,19 +253,13 @@ def normalize_columns(df, filename=""):
     
     df = df.rename(columns=new_columns)
     
-    # 4. FIX: Merge Duplicate Columns (Safety Fix)
+    # Merge Duplicate Columns
     if not df.columns.is_unique:
-        # Replace string 'Unknown' with NaN to allow coalescing
         df = df.replace(['Unknown', 'unknown'], np.nan)
-        # Group by column name and take the first non-null value
         df = df.groupby(level=0, axis=1).first()
     
-    # 5. Initialize Missing Standard Columns
     if 'Status' not in df.columns: df['Status'] = 'New'
-    
-    # Date Handling
-    if 'Date' not in df.columns: 
-        df['Date'] = pd.to_datetime('today').date()
+    if 'Date' not in df.columns: df['Date'] = pd.to_datetime('today').date()
     else: 
         try: df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
         except: df['Date'] = pd.to_datetime('today').date()
@@ -216,14 +268,11 @@ def normalize_columns(df, filename=""):
     if 'Salary' not in df.columns: df['Salary'] = None
     if 'Remarks' not in df.columns: df['Remarks'] = None
     
-    # Fill missing essential columns
     for col in ['Name', 'City', 'Role', 'Phone']:
         if col not in df.columns: df[col] = "Unknown"
 
-    # 6. Smart Role Inference (If column missing or empty)
-    # Check if Role is mostly "Unknown"
+    # Smart Role Inference from Filename
     is_role_missing = df['Role'].eq("Unknown").all() or df['Role'].isnull().all()
-    
     if is_role_missing:
         inferred_role = "Unknown"
         fname_lower = str(filename).lower()
@@ -231,11 +280,12 @@ def normalize_columns(df, filename=""):
         elif 'manager' in fname_lower: inferred_role = "Manager"
         elif 'hr' in fname_lower: inferred_role = "HR"
         elif 'accountant' in fname_lower: inferred_role = "Accountant"
-        
-        # Only overwrite if we found a match
         if inferred_role != "Unknown":
             df['Role'] = inferred_role
             
+    # APPLY CLEANING
+    df['Role'] = df['Role'].apply(clean_role_name)
+    
     df['Status'] = df['Status'].fillna('New')
     df['Role'] = df['Role'].fillna('Unknown')
     return df
@@ -264,7 +314,6 @@ with st.sidebar:
                 if file.name.endswith('.csv'): df_temp = pd.read_csv(file)
                 else: df_temp = pd.read_excel(file)
                 
-                # Normalize with Filename for smart inference
                 df_temp = normalize_columns(df_temp, filename=file.name)
                 df_temp['Source'] = file.name
                 all_data.append(df_temp)
@@ -272,15 +321,13 @@ with st.sidebar:
                 st.error(f"Error reading {file.name}: {e}")
         
         if all_data:
-            # Concat should now work safely
             master_df = pd.concat(all_data, ignore_index=True)
-            
-            # Clean Phone Duplicates (Rows)
             if 'Phone' in master_df.columns:
                 master_df['Phone'] = master_df['Phone'].astype(str)
                 master_df = master_df.drop_duplicates(subset=['Phone'], keep='first')
             
             master_df['Clean_City'] = master_df['City'].apply(clean_city_name)
+            master_df['State'] = master_df['Clean_City'].apply(get_state_from_city)
             master_df['Lat'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(x, [None, None])[0])
             master_df['Lon'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(x, [None, None])[1])
             
@@ -304,7 +351,7 @@ if not st.session_state.data.empty:
     with tab1:
         st.markdown("#### Executive Summary")
         
-        # 1. TOP ROW KPIS (Fixed Visibility)
+        # 1. TOP ROW KPIS
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Total Candidates", f"{len(df):,}")
         k2.metric("New (Current Month)", f"{len(df[df['Status'].isin(['New', 'CREATED'])]):,}")
@@ -313,42 +360,60 @@ if not st.session_state.data.empty:
         
         st.markdown("---")
         
-        # 2. SCREENER (NEW SECTION - FIXED TYPE ERROR)
-        st.markdown("### Recruitment Screener (City vs Role)")
+        # 2. STATE-WISE SCREENER
+        st.markdown("### State-wise Role Matrix")
         
         screener_df = df.copy()
-        screener_df['Display_City'] = screener_df['Clean_City'].fillna('Unknown').str.title()
-        
-        # FIX: Ensure Role is String before Pivoting
         screener_df['Role'] = screener_df['Role'].astype(str)
-        
-        # Filter: Exclude Unknown/Zero data for cleaner view
         screener_df = screener_df[screener_df['Role'] != 'Unknown']
         
-        # Pivot Table
-        screener_pivot = screener_df.pivot_table(
-            index='Display_City', 
+        state_pivot = screener_df.pivot_table(
+            index='State', 
             columns='Role', 
             aggfunc='size', 
             fill_value=0
         )
         
-        # Add Total Column for sorting
-        screener_pivot['Total'] = screener_pivot.sum(axis=1)
-        # Sort by Total Descending
-        screener_pivot = screener_pivot.sort_values('Total', ascending=False)
-        # Remove Total column for clean display
-        screener_pivot = screener_pivot.drop(columns='Total')
+        # Sorting
+        state_pivot['Total'] = state_pivot.sum(axis=1)
+        state_pivot = state_pivot.sort_values('Total', ascending=False)
+        state_pivot = state_pivot.drop(columns='Total')
         
-        # Clean up
-        screener_pivot.columns.name = None
-        screener_pivot.index.name = "City / Region"
+        state_pivot.columns.name = None
+        state_pivot.index.name = "State / Region"
         
-        st.dataframe(screener_pivot, use_container_width=True, height=400)
+        st.dataframe(state_pivot, use_container_width=True, height=400)
         
         st.markdown("---")
         
-        # 3. MAP & CHARTS
+        # 3. CITY-WISE DRILL DOWN
+        st.markdown("### City-wise Drill Down")
+        
+        top_cities = df['Clean_City'].value_counts().index.tolist()
+        selected_city_dash = st.selectbox("Select City to View Details", top_cities)
+        
+        if selected_city_dash:
+            city_df = df[df['Clean_City'] == selected_city_dash]
+            
+            c1, c2 = st.columns(2)
+            
+            with c1:
+                st.markdown("**Role Breakdown**")
+                # Filter 'Unknown' for chart
+                clean_roles = city_df[city_df['Role'] != 'Unknown']
+                role_counts = clean_roles['Role'].value_counts().reset_index()
+                role_counts.columns = ['Role', 'Count']
+                st.dataframe(role_counts, hide_index=True, use_container_width=True)
+                
+            with c2:
+                st.markdown("**Status Breakdown**")
+                status_counts = city_df['Status'].value_counts().reset_index()
+                status_counts.columns = ['Status', 'Count']
+                st.dataframe(status_counts, hide_index=True, use_container_width=True)
+
+        st.markdown("---")
+        
+        # 4. MAP & CHARTS
         col_map, col_stats = st.columns([1.5, 1])
         
         with col_map:
@@ -385,8 +450,7 @@ if not st.session_state.data.empty:
             st.plotly_chart(fig_funnel, use_container_width=True)
             
             st.markdown("#### Role Composition")
-            # Filter out non-string roles for chart safety too
-            role_df_clean = df[df['Role'].apply(lambda x: isinstance(x, str))]
+            role_df_clean = df[df['Role'] != 'Unknown']
             role_counts = role_df_clean['Role'].value_counts().head(5).reset_index()
             role_counts.columns = ['Role', 'Count']
             fig_pie = px.pie(role_counts, values='Count', names='Role', hole=0.6,
@@ -416,7 +480,7 @@ if not st.session_state.data.empty:
                 "Status": st.column_config.SelectboxColumn("Status", options=["New", "Interested", "Not Interested", "Call Back Later", "Wrong Number"], required=True),
                 "Remarks": st.column_config.TextColumn("Notes", width="large")
             },
-            disabled=["Name", "Phone", "City", "Role"],
+            disabled=["Name", "Phone", "City", "Role", "State"],
             hide_index=True,
             key="telecaller",
             use_container_width=True
