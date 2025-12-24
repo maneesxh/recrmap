@@ -55,6 +55,15 @@ st.markdown("""
         color: #111827 !important; /* Pure Black */
     }
     
+    div[data-testid="stMetricLabel"] > div, 
+    div[data-testid="stMetricLabel"] p {
+        color: #111827 !important;
+    }
+    
+    div[data-testid="stMetric"] * {
+        color: #111827 !important;
+    }
+    
     /* TABS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
@@ -182,7 +191,7 @@ def clean_role_name(role):
     if "retail sales" in role: return "Retail Sales Officer"
     if "sales associate" in role: return "Sales Associate"
     if "sales consultant" in role: return "Sales Consultant"
-    if "sales executive" in role or "sales exec" in role or "sr. sales" in role: return "Sales Executive"
+    if "sales executive" in role or "sales" in role: return "Sales Executive"
     
     if "store manager" in role or "store mgr" in role: return "Store Manager"
     if "floor manager" in role: return "Floor Manager"
@@ -241,7 +250,7 @@ def normalize_columns(df, filename=""):
         try: df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
         except: df['Date'] = pd.to_datetime('today').date()
 
-    # FORCE CREATE COLUMNS (Fixes KeyError)
+    # FORCE CREATE COLUMNS
     for col in ['Interview_Date', 'Salary', 'Remarks']:
         if col not in df.columns: df[col] = None
     
@@ -295,7 +304,7 @@ with st.sidebar:
         
         if all_data:
             master_df = pd.concat(all_data, ignore_index=True)
-            # DUPLICATES KEPT as requested
+            # DUPLICATES KEPT
             
             # --- FINAL SAFETY CHECK ---
             for col in ['Interview_Date', 'Salary', 'Remarks', 'Status', 'Role', 'City', 'Phone']:
@@ -336,23 +345,21 @@ if not st.session_state.data.empty:
         
         st.markdown("---")
         
-        # 2. CITY-WISE SCREENER (Replaces State Screener)
+        # 2. CITY-WISE SCREENER
         st.markdown("### 📋 City-wise Role Matrix")
         screener_df = df.copy()
         screener_df['Role'] = screener_df['Role'].astype(str)
         
-        # Filter Garbage for cleaner matrix
+        # Filter Garbage
         screener_df = screener_df[~screener_df['Role'].isin(['Unknown', 'Other'])]
         screener_df = screener_df[screener_df['Clean_City'] != 'Unknown']
         
-        # Pivot on Clean_City (Rows) vs Role (Cols)
+        # Pivot
         city_pivot = screener_df.pivot_table(index='Clean_City', columns='Role', aggfunc='size', fill_value=0)
         
-        # Sort by Total
+        # Sort
         city_pivot['Total'] = city_pivot.sum(axis=1)
         city_pivot = city_pivot.sort_values('Total', ascending=False).drop(columns='Total')
-        
-        # Format
         city_pivot.columns.name = None
         city_pivot.index.name = "City / Location"
         
@@ -360,7 +367,33 @@ if not st.session_state.data.empty:
         
         st.markdown("---")
         
-        # 3. MAP & CHARTS
+        # 3. CITY-WISE DRILL DOWN (ADDED BACK)
+        st.markdown("### 📍 City-wise Drill Down")
+        
+        top_cities = df['Clean_City'].value_counts().index.tolist()
+        selected_city_dash = st.selectbox("Select City to View Details", top_cities)
+        
+        if selected_city_dash:
+            city_df = df[df['Clean_City'] == selected_city_dash]
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("**Role Breakdown**")
+                # Filter 'Unknown' for chart
+                clean_roles = city_df[city_df['Role'] != 'Unknown']
+                role_counts = clean_roles['Role'].value_counts().reset_index()
+                role_counts.columns = ['Role', 'Count']
+                st.dataframe(role_counts, hide_index=True, use_container_width=True)
+                
+            with c2:
+                st.markdown("**Status Breakdown**")
+                status_counts = city_df['Status'].value_counts().reset_index()
+                status_counts.columns = ['Status', 'Count']
+                st.dataframe(status_counts, hide_index=True, use_container_width=True)
+
+        st.markdown("---")
+        
+        # 4. MAP & CHARTS
         col_map, col_stats = st.columns([1.5, 1])
         with col_map:
             st.markdown("#### Geographic Distribution")
