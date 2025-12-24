@@ -13,13 +13,13 @@ import numpy as np
 # ==========================================
 st.set_page_config(
     page_title="Recruitment Analytics Platform",
-    page_icon=None,
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==========================================
-# 2. PROFESSIONAL CSS (High Contrast)
+# 2. PROFESSIONAL CSS
 # ==========================================
 st.markdown("""
 <style>
@@ -55,15 +55,6 @@ st.markdown("""
         color: #111827 !important; /* Pure Black */
     }
     
-    div[data-testid="stMetricLabel"] > div, 
-    div[data-testid="stMetricLabel"] p {
-        color: #111827 !important;
-    }
-    
-    div[data-testid="stMetric"] * {
-        color: #111827 !important;
-    }
-    
     /* TABS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
@@ -95,7 +86,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. BACKEND LOGIC & MAPPINGS
+# 3. BACKEND LOGIC
 # ==========================================
 
 CITY_COORDINATES = {
@@ -145,91 +136,77 @@ CITY_COORDINATES = {
     "surat": [21.1702, 72.8311], "coimbatore": [11.0168, 76.9558]
 }
 
-CITY_STATE_MAP = {
-    # Telangana
-    "hyderabad": "Telangana", "warangal": "Telangana", "nizamabad": "Telangana", 
-    "khammam": "Telangana", "karimnagar": "Telangana", "mahabubnagar": "Telangana", 
-    "nalgonda": "Telangana", "adilabad": "Telangana", "siddipet": "Telangana", 
-    "mancherial": "Telangana", "jagtial": "Telangana", "medchal": "Telangana", 
-    "sangareddy": "Telangana", "bhainsa": "Telangana", "huzurabad": "Telangana", 
-    "secunderabad": "Telangana",
-
-    # Andhra Pradesh
-    "vijayawada": "Andhra Pradesh", "guntur": "Andhra Pradesh", "visakhapatnam": "Andhra Pradesh", 
-    "vizag": "Andhra Pradesh", "rajahmundry": "Andhra Pradesh", "kakinada": "Andhra Pradesh", 
-    "nellore": "Andhra Pradesh", "tirupati": "Andhra Pradesh", "kurnool": "Andhra Pradesh", 
-    "anantapur": "Andhra Pradesh", "eluru": "Andhra Pradesh", "ongole": "Andhra Pradesh", 
-    "tenali": "Andhra Pradesh", "srikakulam": "Andhra Pradesh", "vizianagaram": "Andhra Pradesh", 
-    "chittoor": "Andhra Pradesh", "kadapa": "Andhra Pradesh", "machilipatnam": "Andhra Pradesh", 
-    "bhimavaram": "Andhra Pradesh", "gudivada": "Andhra Pradesh", "narsaraopet": "Andhra Pradesh", 
-    "tadepalligudem": "Andhra Pradesh", "nandyal": "Andhra Pradesh", "proddatur": "Andhra Pradesh", 
-    "hindupur": "Andhra Pradesh", "guntakal": "Andhra Pradesh", "dharmavaram": "Andhra Pradesh", 
-    "nidadavole": "Andhra Pradesh", "chirala": "Andhra Pradesh", "kavali": "Andhra Pradesh", 
-    "tanuku": "Andhra Pradesh", "markapuram": "Andhra Pradesh",
-
-    # Maharashtra
-    "mumbai": "Maharashtra", "pune": "Maharashtra", "nagpur": "Maharashtra", 
-    "kamptee": "Maharashtra", "amravati": "Maharashtra", "aurangabad": "Maharashtra", 
-    "nashik": "Maharashtra", "solapur": "Maharashtra", "thane": "Maharashtra",
-
-    # Karnataka
-    "bangalore": "Karnataka", "bengaluru": "Karnataka", "mysore": "Karnataka",
-
-    # Tamil Nadu
-    "chennai": "Tamil Nadu", "coimbatore": "Tamil Nadu", "madurai": "Tamil Nadu", 
-    "salem": "Tamil Nadu", "vellore": "Tamil Nadu",
-
-    # Uttar Pradesh
-    "delhi": "Delhi", "noida": "Uttar Pradesh", "gurgaon": "Haryana",
-    "gorakhpur": "Uttar Pradesh", "lucknow": "Uttar Pradesh", "kanpur": "Uttar Pradesh", 
-    "varanasi": "Uttar Pradesh", "allahabad": "Uttar Pradesh", "prayagraj": "Uttar Pradesh", 
-    "agra": "Uttar Pradesh", "meerut": "Uttar Pradesh", "ghazipur": "Uttar Pradesh", 
-    "azamgarh": "Uttar Pradesh", "akbarpur": "Uttar Pradesh", "mirzapur": "Uttar Pradesh",
-
-    # Rajasthan
-    "ajmer": "Rajasthan", "jaipur": "Rajasthan", "jodhpur": "Rajasthan", 
-    "kota": "Rajasthan", "bikaner": "Rajasthan", "udaipur": "Rajasthan",
-
-    # West Bengal
-    "kolkata": "West Bengal",
-
-    # Gujarat
-    "ahmedabad": "Gujarat", "surat": "Gujarat", "vadodara": "Gujarat",
-
-    # Madhya Pradesh
-    "bhopal": "Madhya Pradesh", "indore": "Madhya Pradesh"
-}
-
 def clean_city_name(city_raw):
-    if pd.isna(city_raw): return None
+    if pd.isna(city_raw): return "Unknown"
     city = str(city_raw).lower().strip()
-    city = re.split(r'[,(\-]', city)[0].strip()
+    
+    # 1. Check if it's a STATE (and drop it)
+    known_states = ["andhra pradesh", "telangana", "maharashtra", "karnataka", "tamil nadu", "uttar pradesh", "rajasthan", "gujarat", "bihar", "west bengal", "madhya pradesh"]
+    if city in known_states:
+        return "Unknown"
+    
+    # 2. Map Dirty Variations to Clean Names
+    if 'hyd' in city: return 'Hyderabad'
+    if 'secunderabad' in city: return 'Secunderabad'
+    if 'vizag' in city or 'vishakhapatnam' in city: return 'Visakhapatnam'
+    if 'vijay' in city or 'bezawada' in city: return 'Vijayawada'
+    if 'gorkhpur' in city: return 'Gorakhpur'
+    if 'bengaluru' in city: return 'Bangalore'
+    if 'rajahmundry' in city or 'rajhamundry' in city: return 'Rajahmundry'
+    if 'tirupati' in city or 'tirupathi' in city: return 'Tirupati'
+    if 'ajmer' in city: return 'Ajmer'
+    if 'kanpur' in city: return 'Kanpur'
+    if 'noida' in city: return 'Noida'
+    if 'delhi' in city: return 'Delhi'
+    
+    # 3. Filter Garbage
+    if re.search(r'\d', city): return "Unknown" 
+    if "job" in city or "enquiry" in city: return "Unknown"
+    
+    # 4. Standard Cleanup
+    city = re.split(r'[,(\-/]', city)[0].strip()
     city = city.replace(" district", "").replace(" city", "").strip()
-    return city
+    
+    return city.title()
 
-def get_state_from_city(clean_city):
-    if not clean_city: return "Unknown"
-    return CITY_STATE_MAP.get(clean_city.lower(), "Other")
-
-# --- STRICT ROLE CLEANING ---
 def clean_role_name(role):
     if pd.isna(role): return "Unknown"
     role = str(role).lower().strip()
     
-    # 1. Filter out garbage (numbers, distances, years)
-    if re.search(r'^\d', role): return "Unknown" # Starts with number (12th pass, 30km, 1 year)
-    if 'km' in role: return "Unknown" # Contains 'km' (30km)
-    if role in ['yes', 'no', 'male', 'female', 'unknown']: return "Unknown"
-    if len(role) < 3: return "Unknown"
+    if re.search(r'^\d', role): return "Unknown" 
+    if 'km' in role: return "Unknown"
+    if role in ['yes', 'no', 'male', 'female', 'unknown', 'other']: return "Unknown"
+    if len(role) < 2: return "Unknown"
     
-    # 2. Standardize Common Roles
-    if "sales" in role: return "Sales Executive"
-    if "manager" in role: return "Manager"
-    if "hr" in role: return "HR"
+    # Map to Target List
+    if "retail sales" in role: return "Retail Sales Officer"
+    if "sales associate" in role: return "Sales Associate"
+    if "sales consultant" in role: return "Sales Consultant"
+    if "sales executive" in role or "sales exec" in role or "sr. sales" in role: return "Sales Executive"
+    
+    if "store manager" in role or "store mgr" in role: return "Store Manager"
+    if "floor manager" in role: return "Floor Manager"
+    if "branch manager" in role: return "Branch Manager"
+    
     if "account" in role: return "Accountant"
-    if "cashier" in role: return "Cashier"
+    if "billing" in role or "cashier" in role: return "Billing/Cashier"
+    if "data analyst" in role or "data entry" in role: return "Data Analyst"
+    if "customer service" in role or "cse" in role or "support" in role: return "Customer Service"
+    if "recruit" in role: return "Recruiter"
+    if "telecaller" in role or "tele" in role: return "Telecaller"
+    if "stone" in role or "assorter" in role: return "Stone Assorter"
+    if "social media" in role: return "Social Media Executive"
     
-    return role.title()
+    if "hr" in role or "human resource" in role: return "HR"
+    if "marketing" in role: return "Marketing"
+    if "quality" in role or "qc" in role: return "Quality Check"
+    if "b2b" in role: return "B2B"
+    if "b2c" in role: return "B2C"
+    
+    if "manager" in role: return "Store Manager" 
+    if "sales" in role: return "Sales Executive" 
+
+    return "Other"
 
 def normalize_columns(df, filename=""):
     df.columns = [str(c).lower().strip() for c in df.columns]
@@ -264,30 +241,26 @@ def normalize_columns(df, filename=""):
         try: df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.date
         except: df['Date'] = pd.to_datetime('today').date()
 
-    if 'Interview_Date' not in df.columns: df['Interview_Date'] = None
-    if 'Salary' not in df.columns: df['Salary'] = None
-    if 'Remarks' not in df.columns: df['Remarks'] = None
+    # FORCE CREATE COLUMNS (Fixes KeyError)
+    for col in ['Interview_Date', 'Salary', 'Remarks']:
+        if col not in df.columns: df[col] = None
     
     for col in ['Name', 'City', 'Role', 'Phone']:
         if col not in df.columns: df[col] = "Unknown"
 
-    # Smart Role Inference from Filename
     is_role_missing = df['Role'].eq("Unknown").all() or df['Role'].isnull().all()
     if is_role_missing:
         inferred_role = "Unknown"
         fname_lower = str(filename).lower()
         if 'sales' in fname_lower: inferred_role = "Sales Executive"
-        elif 'manager' in fname_lower: inferred_role = "Manager"
+        elif 'manager' in fname_lower: inferred_role = "Store Manager"
         elif 'hr' in fname_lower: inferred_role = "HR"
         elif 'accountant' in fname_lower: inferred_role = "Accountant"
         if inferred_role != "Unknown":
             df['Role'] = inferred_role
             
-    # APPLY CLEANING
     df['Role'] = df['Role'].apply(clean_role_name)
-    
     df['Status'] = df['Status'].fillna('New')
-    df['Role'] = df['Role'].fillna('Unknown')
     return df
 
 # ==========================================
@@ -322,14 +295,18 @@ with st.sidebar:
         
         if all_data:
             master_df = pd.concat(all_data, ignore_index=True)
-            if 'Phone' in master_df.columns:
-                master_df['Phone'] = master_df['Phone'].astype(str)
-                master_df = master_df.drop_duplicates(subset=['Phone'], keep='first')
+            # DUPLICATES KEPT as requested
             
+            # --- FINAL SAFETY CHECK ---
+            for col in ['Interview_Date', 'Salary', 'Remarks', 'Status', 'Role', 'City', 'Phone']:
+                if col not in master_df.columns:
+                    master_df[col] = None
+
             master_df['Clean_City'] = master_df['City'].apply(clean_city_name)
-            master_df['State'] = master_df['Clean_City'].apply(get_state_from_city)
-            master_df['Lat'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(x, [None, None])[0])
-            master_df['Lon'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(x, [None, None])[1])
+            
+            # MAP FIX: Lowercase lookup
+            master_df['Lat'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(str(x).lower(), [None, None])[0])
+            master_df['Lon'] = master_df['Clean_City'].map(lambda x: CITY_COORDINATES.get(str(x).lower(), [None, None])[1])
             
             st.session_state.data = master_df
             st.success("Dataset successfully loaded.")
@@ -351,7 +328,6 @@ if not st.session_state.data.empty:
     with tab1:
         st.markdown("#### Executive Summary")
         
-        # 1. TOP ROW KPIS
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Total Candidates", f"{len(df):,}")
         k2.metric("New (Current Month)", f"{len(df[df['Status'].isin(['New', 'CREATED'])]):,}")
@@ -360,62 +336,32 @@ if not st.session_state.data.empty:
         
         st.markdown("---")
         
-        # 2. STATE-WISE SCREENER
-        st.markdown("### State-wise Role Matrix")
-        
+        # 2. CITY-WISE SCREENER (Replaces State Screener)
+        st.markdown("### 📋 City-wise Role Matrix")
         screener_df = df.copy()
         screener_df['Role'] = screener_df['Role'].astype(str)
-        screener_df = screener_df[screener_df['Role'] != 'Unknown']
         
-        state_pivot = screener_df.pivot_table(
-            index='State', 
-            columns='Role', 
-            aggfunc='size', 
-            fill_value=0
-        )
+        # Filter Garbage for cleaner matrix
+        screener_df = screener_df[~screener_df['Role'].isin(['Unknown', 'Other'])]
+        screener_df = screener_df[screener_df['Clean_City'] != 'Unknown']
         
-        # Sorting
-        state_pivot['Total'] = state_pivot.sum(axis=1)
-        state_pivot = state_pivot.sort_values('Total', ascending=False)
-        state_pivot = state_pivot.drop(columns='Total')
+        # Pivot on Clean_City (Rows) vs Role (Cols)
+        city_pivot = screener_df.pivot_table(index='Clean_City', columns='Role', aggfunc='size', fill_value=0)
         
-        state_pivot.columns.name = None
-        state_pivot.index.name = "State / Region"
+        # Sort by Total
+        city_pivot['Total'] = city_pivot.sum(axis=1)
+        city_pivot = city_pivot.sort_values('Total', ascending=False).drop(columns='Total')
         
-        st.dataframe(state_pivot, use_container_width=True, height=400)
+        # Format
+        city_pivot.columns.name = None
+        city_pivot.index.name = "City / Location"
+        
+        st.dataframe(city_pivot, use_container_width=True, height=500)
         
         st.markdown("---")
         
-        # 3. CITY-WISE DRILL DOWN
-        st.markdown("### City-wise Drill Down")
-        
-        top_cities = df['Clean_City'].value_counts().index.tolist()
-        selected_city_dash = st.selectbox("Select City to View Details", top_cities)
-        
-        if selected_city_dash:
-            city_df = df[df['Clean_City'] == selected_city_dash]
-            
-            c1, c2 = st.columns(2)
-            
-            with c1:
-                st.markdown("**Role Breakdown**")
-                # Filter 'Unknown' for chart
-                clean_roles = city_df[city_df['Role'] != 'Unknown']
-                role_counts = clean_roles['Role'].value_counts().reset_index()
-                role_counts.columns = ['Role', 'Count']
-                st.dataframe(role_counts, hide_index=True, use_container_width=True)
-                
-            with c2:
-                st.markdown("**Status Breakdown**")
-                status_counts = city_df['Status'].value_counts().reset_index()
-                status_counts.columns = ['Status', 'Count']
-                st.dataframe(status_counts, hide_index=True, use_container_width=True)
-
-        st.markdown("---")
-        
-        # 4. MAP & CHARTS
+        # 3. MAP & CHARTS
         col_map, col_stats = st.columns([1.5, 1])
-        
         with col_map:
             st.markdown("#### Geographic Distribution")
             map_df = df.dropna(subset=['Lat', 'Lon'])
@@ -431,35 +377,22 @@ if not st.session_state.data.empty:
                     ).add_to(marker_cluster)
                 st_folium(m, width=None, height=500)
             else:
-                st.warning("Geographic data unavailable.")
+                st.warning("Geographic data unavailable. Check city names.")
 
         with col_stats:
             st.markdown("#### Pipeline Funnel")
             status_counts = df['Status'].value_counts().reset_index()
             status_counts.columns = ['Stage', 'Count']
-            
-            fig_funnel = px.bar(status_counts, x='Stage', y='Count', text='Count',
-                                color_discrete_sequence=['#2563EB'])
-            fig_funnel.update_layout(
-                showlegend=False, 
-                height=220, 
-                margin=dict(t=0,b=0,l=0,r=0),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
+            fig_funnel = px.bar(status_counts, x='Stage', y='Count', text='Count', color_discrete_sequence=['#2563EB'])
+            fig_funnel.update_layout(showlegend=False, height=220, margin=dict(t=0,b=0,l=0,r=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_funnel, use_container_width=True)
             
             st.markdown("#### Role Composition")
             role_df_clean = df[df['Role'] != 'Unknown']
             role_counts = role_df_clean['Role'].value_counts().head(5).reset_index()
             role_counts.columns = ['Role', 'Count']
-            fig_pie = px.pie(role_counts, values='Count', names='Role', hole=0.6,
-                             color_discrete_sequence=px.colors.sequential.Blues_r)
-            fig_pie.update_layout(
-                height=220, 
-                margin=dict(t=0,b=0,l=0,r=0),
-                showlegend=False
-            )
+            fig_pie = px.pie(role_counts, values='Count', names='Role', hole=0.6, color_discrete_sequence=px.colors.sequential.Blues_r)
+            fig_pie.update_layout(height=220, margin=dict(t=0,b=0,l=0,r=0), showlegend=False)
             st.plotly_chart(fig_pie, use_container_width=True)
 
     # --- TAB 2: OUTREACH ---
@@ -480,7 +413,7 @@ if not st.session_state.data.empty:
                 "Status": st.column_config.SelectboxColumn("Status", options=["New", "Interested", "Not Interested", "Call Back Later", "Wrong Number"], required=True),
                 "Remarks": st.column_config.TextColumn("Notes", width="large")
             },
-            disabled=["Name", "Phone", "City", "Role", "State"],
+            disabled=["Name", "Phone", "City", "Role"],
             hide_index=True,
             key="telecaller",
             use_container_width=True
